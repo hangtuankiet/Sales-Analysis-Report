@@ -1,0 +1,50 @@
+import pandas as pd
+from pycaret.classification import*
+
+# Load the data from the uploaded Excel file
+file_path = r'D:\NTU\DA_BO\BaiTap_Lon\challenge_10\north-america-retail-supply-chain-sales-analysis-A3Qaz4X8pQfxMkkO.xlsx'
+data = pd.read_excel(file_path)
+
+# Chuyển đổi cột 'Returned' sang định dạng nhị phân trong đó 'Không' là 0 và bất kỳ giá trị nào khác là 1
+data['Returned'] = (data['Returned'] != 'Not').astype(int)
+
+# Chọn các thuộc tính cho mô hình
+features = data.drop(columns=['Row ID', 'Order ID', 'Customer ID', 'Customer Name', 'Postal Code', 'Product ID', 'Product Name'])
+
+
+# Thiết lập môi trường PyCaret
+clf_setup = setup(data=features,
+                  target='Returned',
+                  numeric_features=['Sales', 'Quantity', 'Discount', 'Profit'],
+                  categorical_features=['Ship Mode', 'Segment', 'City', 'State', 'Region', 'Category', 'Sub-Category'],
+                  ignore_features=['Country'],
+                  date_features=['Order Date', 'Ship Date'])  # Đảm bảo tính nhất quán
+
+# So sánh các mô hình và lưu mô hình tốt nhất
+best_model = compare_models()
+
+# Tạo mô hình Light Gradient Boosting Machine
+lightgbm = create_model('lightgbm')
+
+# Tinh chỉnh mô hình LightGBM để cải thiện Recall
+tuned_lightgbm = tune_model(lightgbm, optimize='Recall')
+
+# Lưu mô hình cuối cùng nếu bạn hài lòng với kết quả
+final_model = finalize_model(tuned_lightgbm)
+save_model(final_model, 'D:/NTU/DA_BO/BaiTap_Lon/returned_model')
+
+
+------------------------------------------------------
+
+import pandas as pd
+from pycaret.classification import *
+
+# Load the data from the uploaded Excel file
+file_path = r'D:\NTU\DA_BO\BaiTap_Lon\challenge_10\north-america-retail-supply-chain-sales-analysis-A3Qaz4X8pQfxMkkO.xlsx'
+data = pd.read_excel(file_path)
+
+
+loaded_model = load_model('D:/NTU/DA_BO/BaiTap_Lon/returned_model')
+predictions = predict_model(loaded_model, data=data)
+
+predictions
